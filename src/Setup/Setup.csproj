@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Setup auf .NET Framework 4.8: in Windows 10/11 eingebaut, läuft also ohne Vorinstallation. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>KI-Zentrale-Setup</AssemblyName>
+    <RootNamespace>KIZentraleSetup</RootNamespace>
+    <ApplicationIcon>..\KIZentrale\kiz.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Description>Installationsprogramm der KI-Zentrale</Description>
+    <!-- Pfad zur fertig gebauten App (erzeugt von build.ps1) -->
+    <AppPayload Condition="'$(AppPayload)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\app\KI-Zentrale.exe</AppPayload>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Die App wird in das Setup eingebettet -->
+  <ItemGroup>
+    <EmbeddedResource Include="$(AppPayload)" LogicalName="payload.KI-Zentrale.exe" />
+    <EmbeddedResource Include="..\KIZentrale\monitor.ico" LogicalName="payload.monitor.ico" />
+  </ItemGroup>
+
+  <Target Name="CheckPayload" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(AppPayload)')" Text="App fehlt: $(AppPayload). Bitte zuerst build.ps1 ausführen (baut App und Setup)." />
+  </Target>
+
+</Project>

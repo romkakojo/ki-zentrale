@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  pull_request:
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: App und Setup bauen
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Setup als Artefakt hochladen
+        uses: actions/upload-artifact@v7
+        with:
+          name: KI-Zentrale-Setup-${{ github.sha }}
+          path: |
+            artifacts/KI-Zentrale-Setup.exe
+            artifacts/KI-Zentrale-Setup.exe.sha256
+          retention-days: 14

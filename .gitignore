@@ -1,0 +1,30 @@
+# Build-Ausgaben
+artifacts/
+[Bb]in/
+[Oo]bj/
+publish/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+
+# WebView2-Arbeitsdaten bei lokalen Tests
+*.WebView2/
+edge-profile/
+
+# Betriebssystem
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Temporäres
+*.tmp
+*.log
+*.bak
+
+# Lokale Arbeitsordner und Zugangsdaten – niemals hochladen
+work/
+cred*.txt
+*.token
+.env

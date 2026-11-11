@@ -1,0 +1,48 @@
+name: Release
+
+# Ein Tag wie v1.2.0 baut App und Setup und veröffentlicht ein GitHub-Release.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Version aus Tag
+        id: ver
+        shell: pwsh
+        run: '"version=$("${{ github.ref_name }}".TrimStart("v"))" >> $env:GITHUB_OUTPUT'
+
+      - name: App und Setup bauen
+        shell: pwsh
+        run: ./build.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - name: Release-Notizen aus CHANGELOG.md
+        shell: pwsh
+        run: |
+          $v = '${{ steps.ver.outputs.version }}'
+          $text = Get-Content CHANGELOG.md -Raw
+          $m = [regex]::Match($text, "(?s)## \[$([regex]::Escape($v))\][^\n]*\n(.*?)(?=\n## |\n\[|$)")
+          $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "Siehe CHANGELOG.md" }
+          $hash = (Get-Content artifacts/KI-Zentrale-Setup.exe.sha256).Split(' ')[0]
+          $notes += "`n`n---`n**Installation:** ``KI-Zentrale-Setup.exe`` herunterladen und starten (pro Benutzer, ohne Admin-Rechte).`n`nSHA-256: ``$hash``"
+          Set-Content release-notes.md $notes -Encoding utf8
+
+      - name: GitHub-Release anlegen
+        uses: softprops/action-gh-release@v3
+        with:
+          name: KI-Zentrale ${{ steps.ver.outputs.version }}
+          body_path: release-notes.md
+          files: |
+            artifacts/KI-Zentrale-Setup.exe
+            artifacts/KI-Zentrale-Setup.exe.sha256

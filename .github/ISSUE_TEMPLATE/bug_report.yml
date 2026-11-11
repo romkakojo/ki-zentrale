@@ -1,0 +1,50 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet
+labels: [fehler]
+body:
+  - type: markdown
+    attributes:
+      value: Danke fürs Melden! Bitte prüfe vorher, ob es schon ein Issue zum gleichen Problem gibt.
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Was ist passiert?
+      description: Was hast du getan, was hast du erwartet, was ist stattdessen passiert?
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zum Nachstellen
+      placeholder: |
+        1. …
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: KI-Zentrale-Version
+      placeholder: z. B. 1.1.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows-Version und Anzeige-Skalierung
+      placeholder: z. B. Windows 11 24H2, 150 %
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Betroffener Bereich
+      options:
+        - Selbsterkennung
+        - Widget / Kacheln
+        - Systemmonitor
+        - Tray / Fenster
+        - Setup / Deinstallation
+        - Sonstiges
+  - type: textarea
+    id: config
+    attributes:
+      label: Erkannte Tools (optional)
+      description: Tray → „Erkannte Tools anzeigen“ oder Inhalt von `%LOCALAPPDATA%\KI-Zentrale\config.json`. Persönliche Pfade bitte unkenntlich machen.
+      render: json

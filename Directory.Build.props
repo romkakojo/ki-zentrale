@@ -1,0 +1,13 @@
+<Project>
+  <!-- Gemeinsame Einstellungen für alle Projekte. Version hier ändern (und in CHANGELOG.md eintragen). -->
+  <PropertyGroup>
+    <Version>1.1.0</Version>
+    <Product>KI-Zentrale</Product>
+    <Company>KI-Zentrale Contributors</Company>
+    <Copyright>Copyright © 2026 KI-Zentrale Contributors</Copyright>
+    <RepositoryType>git</RepositoryType>
+    <Deterministic>true</Deterministic>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

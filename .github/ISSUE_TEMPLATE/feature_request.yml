@@ -1,0 +1,19 @@
+name: Idee / neues Tool
+description: Vorschlag für eine neue Funktion oder ein weiteres KI-Tool
+labels: [idee]
+body:
+  - type: textarea
+    id: idee
+    attributes:
+      label: Was wünschst du dir?
+    validations:
+      required: true
+  - type: textarea
+    id: tool
+    attributes:
+      label: Neues Tool (falls zutreffend)
+      description: Name, Link, wie man erkennt, dass es läuft (Prozess, Port, Startmenü-Eintrag), und sinnvolle Aktionen.
+  - type: textarea
+    id: nutzen
+    attributes:
+      label: Wofür brauchst du das?

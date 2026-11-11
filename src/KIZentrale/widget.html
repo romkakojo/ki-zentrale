@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#1b1c1e">
+<title>KI-Zentrale</title>
+<style>
+  :root{
+    --glass:rgba(255,255,255,.035); --stroke:rgba(255,255,255,.08);
+    --txt:#e9eaec; --dim:#a3a7ad; --mute:#71767d;
+    --ok:#4ade80; --off:#5b6067; --warn:#fbbf24;
+    --a1:#ff7a1a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font:13.5px/1.45 'Segoe UI Variable','Segoe UI',system-ui,sans-serif;color:var(--txt);overflow:hidden;
+       user-select:none;
+       background:
+         linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,0) 40%),
+         repeating-linear-gradient(45deg,rgba(255,255,255,.028) 0 3px,transparent 3px 6px),
+         repeating-linear-gradient(-45deg,rgba(0,0,0,.35) 0 3px,transparent 3px 6px),
+         linear-gradient(180deg,#2a2c2f,#17181a)}
+  .widget{height:100%;padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  .widget::-webkit-scrollbar{width:6px} .widget::-webkit-scrollbar-thumb{background:#3a3c40;border-radius:3px}
+  .widget > *{flex-shrink:0}   /* bei wenig Platz scrollen statt zusammenquetschen */
+
+  .top{display:flex;align-items:center;gap:11px;cursor:grab}
+  .top .winbtn{cursor:pointer}
+  .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+        background:linear-gradient(145deg,#3d4045,#1d1f22);border:1px solid rgba(255,255,255,.12);
+        box-shadow:0 6px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15)}
+  .title{flex:1}
+  .title b{font-size:16px;letter-spacing:.2px}
+  .title small{display:block;color:var(--dim);font-size:11.5px}
+  .winbtn{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--dim);font-size:15px;
+          background:linear-gradient(180deg,#2e3034,#222326);border:1px solid rgba(255,255,255,.08);cursor:pointer;
+          box-shadow:0 3px 0 #0d0e0f;transition:transform .08s,box-shadow .08s}
+  .winbtn:active{transform:translateY(3px);box-shadow:0 0 0 #0d0e0f}
+  .winbtn.spin svg{animation:spin .7s linear}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .hero{border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:11px;
+        background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+        border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  .hero-row{display:flex;align-items:center;gap:11px}
+  .pulse{width:12px;height:12px;border-radius:50%;background:var(--off);flex:0 0 auto}
+  .pulse.ok{background:var(--ok);box-shadow:0 0 0 5px rgba(74,222,128,.15),0 0 14px var(--ok);animation:beat 2.4s infinite}
+  .pulse.warn{background:var(--warn);box-shadow:0 0 12px var(--warn);animation:beat 1s infinite}
+  @keyframes beat{50%{box-shadow:0 0 0 8px rgba(74,222,128,0),0 0 6px var(--ok)}}
+  .hero h2{font-size:15px;flex:1;line-height:1.3}
+  .hero h2 small{display:block;font-weight:400;color:var(--dim);font-size:11.5px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .stat{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.04);border-radius:11px;padding:7px 10px}
+  .stat i{font-style:normal;color:var(--mute);font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+  .stat b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+  .bar-l{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:5px}
+  .bar{height:7px;border-radius:5px;background:rgba(0,0,0,.45);overflow:hidden}
+  .bar>div{height:100%;width:0;border-radius:5px;transition:width .6s ease;
+           background:linear-gradient(90deg,#6b7078,#c9ccd1 70%,var(--a1))}
+  .actions{display:flex;gap:7px}
+  .actions .btn{flex:1;justify-content:center}
+
+  /* ---------- Tasten mit Drueck-Animation ---------- */
+  .btn{position:relative;overflow:hidden;border:0;cursor:pointer;font:600 12.5px 'Segoe UI',sans-serif;
+       border-radius:12px;padding:8px 12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+       color:#1a0d02;background:linear-gradient(180deg,#ff8f3a,#e8650f);
+       box-shadow:0 4px 0 #8a3a06,0 8px 18px rgba(232,101,15,.25),inset 0 1px 0 rgba(255,255,255,.35);
+       transform:translateY(0);transition:transform .07s ease,box-shadow .07s ease,filter .15s}
+  .btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .btn:active,.btn.down{transform:translateY(4px) scale(.97);box-shadow:0 0 0 #8a3a06,0 2px 6px rgba(232,101,15,.3),inset 0 2px 6px rgba(0,0,0,.3)}
+  .btn.ghost{color:#e5e7eb;background:linear-gradient(180deg,#3a3c40,#26282b);
+             box-shadow:0 4px 0 #0d0e0f,inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.4)}
+  .btn.ghost:active,.btn.ghost.down{box-shadow:0 0 0 #0d0e0f,inset 0 2px 8px rgba(0,0,0,.5)}
+  .btn.steel{color:#15171a;background:linear-gradient(180deg,#e9ebee,#aeb3ba);
+             box-shadow:0 4px 0 #5c6067,0 8px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.8)}
+  .btn.steel:active,.btn.steel.down{box-shadow:0 0 0 #5c6067,inset 0 2px 6px rgba(0,0,0,.25)}
+  .btn.danger{color:#ff9b9b;background:linear-gradient(180deg,#3b2224,#2a1719);border:1px solid rgba(255,90,90,.25);
+              box-shadow:0 4px 0 #120809,inset 0 1px 0 rgba(255,255,255,.08)}
+  .btn.danger:active,.btn.danger.down{box-shadow:0 0 0 #120809,inset 0 2px 8px rgba(0,0,0,.5)}
+  .btn.confirm{color:#fff;background:linear-gradient(180deg,#e04563,#a3243c);animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+  .btn:disabled{opacity:.4;cursor:default;filter:none;transform:none}
+  .btn.sm{padding:6px 9px;font-size:11.5px;border-radius:10px}
+  .ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.55;
+          background:radial-gradient(circle,rgba(255,255,255,.75),rgba(255,255,255,0) 70%);animation:rip .55s ease-out forwards}
+  @keyframes rip{to{transform:scale(3.2);opacity:0}}
+
+  .sec{display:flex;align-items:center;justify-content:space-between;color:#8a8f96;font-size:10.5px;
+       text-transform:uppercase;letter-spacing:.9px;margin-top:2px}
+  .sec span{color:var(--dim);text-transform:none;letter-spacing:0;font-size:11px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .tile{position:relative;border-radius:16px;padding:11px 11px 10px;display:flex;flex-direction:column;gap:8px;
+        background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+        border:1px solid rgba(255,255,255,.07);
+        box-shadow:0 5px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07);
+        transition:transform .08s ease,box-shadow .08s ease}
+  .tile.press{transform:translateY(4px) scale(.985);box-shadow:0 1px 0 rgba(0,0,0,.55),inset 0 2px 10px rgba(0,0,0,.55)}
+  .tile.dim{opacity:.45}
+  .th{display:flex;align-items:center;gap:9px}
+  .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
+       background:linear-gradient(145deg,#41444a,#1f2124);border:1px solid rgba(255,255,255,.10);
+       box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(0,0,0,.45);transition:box-shadow .3s}
+  .tile.on .ico{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(255,122,26,.4),0 3px 10px rgba(255,122,26,.2)}
+  .ico svg{width:18px;height:18px}
+  .tn{flex:1;min-width:0}
+  .tn b{display:block;font-size:13px;white-space:nowrap}
+  .tn small{display:block;color:var(--dim);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--off);transition:background .3s}
+  .tile.on .dot{background:var(--ok);box-shadow:0 0 8px rgba(74,222,128,.8)}
+  .chips{display:flex;gap:4px;flex-wrap:wrap;min-height:19px}
+  .chip{font-size:10px;padding:2px 7px;border-radius:7px;background:rgba(255,255,255,.06);color:var(--dim)}
+  .chip.g{background:rgba(74,222,128,.10);color:#9be7b4}
+  .ta{display:flex;gap:6px}
+  .ta .btn{flex:1;justify-content:center}
+
+  .foot{margin-top:auto;display:flex;gap:7px;padding-top:4px}
+  .foot .btn{flex:1;justify-content:center}
+
+  /* ---------- Bearbeiten-Modus ---------- */
+  .winbtn.on{color:#1a0d02;background:linear-gradient(180deg,#ff8f3a,#e8650f);border-color:transparent;box-shadow:0 3px 0 #8a3a06}
+  .editbar{display:none;flex-direction:column;gap:9px;border-radius:16px;padding:11px 12px;
+           background:rgba(255,122,26,.07);border:1px dashed rgba(255,122,26,.45)}
+  body.editing .editbar{display:flex}
+  .eb-head{display:flex;align-items:center;gap:9px}
+  .eb-head b{font-size:13px}
+  .eb-head span{flex:1;color:var(--dim);font-size:11px}
+  .eb-hidden{display:flex;flex-wrap:wrap;gap:6px;min-height:26px;align-items:center}
+  .eb-hidden .none{color:var(--mute);font-size:11.5px}
+  .addchip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.12);cursor:pointer;
+           background:linear-gradient(180deg,#3a3c40,#26282b);color:#e5e7eb;border-radius:9px;padding:4px 9px;
+           font:600 11.5px 'Segoe UI',sans-serif;box-shadow:0 3px 0 #0d0e0f;transition:transform .07s,box-shadow .07s}
+  .addchip:active{transform:translateY(3px);box-shadow:none}
+  .addchip i{font-style:normal;color:var(--a1);font-size:14px;line-height:1}
+  .eb-reset{align-self:flex-start;background:none;border:0;color:var(--mute);font:11px 'Segoe UI',sans-serif;cursor:pointer;padding:0}
+  .eb-reset:hover{color:var(--txt);text-decoration:underline}
+
+  .tile.missing{display:none!important}
+  body.editing .tile{cursor:grab;animation:wob .5s ease-in-out infinite alternate}
+  body.editing .tile:nth-child(2n){animation-delay:-.25s}
+  @keyframes wob{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
+  body.editing .tile .ta{pointer-events:none;opacity:.55}
+  body.editing .tile.dragging{opacity:.25;animation:none}
+  .tile .rm{display:none;position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;z-index:3;
+            border:1px solid rgba(255,255,255,.25);background:linear-gradient(180deg,#e04563,#a3243c);color:#fff;
+            font:700 13px/20px 'Segoe UI',sans-serif;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .tile .rm:active{transform:scale(.88)}
+  body.editing .tile .rm{display:block}
+  .tile .grip{display:none;position:absolute;top:8px;right:28px;color:var(--mute);font-size:13px;letter-spacing:-2px}
+  body.editing .tile .grip{display:block}
+  .grid{min-height:20px}
+  body.editing .grid{min-height:70px;border-radius:16px;outline:1px dashed rgba(255,255,255,.08);outline-offset:4px}
+  .grid .ph{border-radius:16px;border:2px dashed rgba(255,122,26,.6);background:rgba(255,122,26,.06);min-height:96px}
+  .grid .empty{grid-column:1/-1;color:var(--mute);font-size:11.5px;text-align:center;padding:14px 0}
+
+  #toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+         background:rgba(20,21,23,.96);border:1px solid rgba(255,255,255,.12);color:var(--txt);
+         padding:9px 14px;border-radius:11px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.6);
+         transition:.2s ease;max-width:92%;text-align:center;z-index:9}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{border-color:rgba(255,90,90,.5);color:#ffb4b4}
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="top">
+    <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2" fill="#ff7a1a" stroke="none"/></svg></div>
+    <div class="title"><b>KI-Zentrale</b><small id="sub">Alles lokal</small></div>
+    <div class="winbtn" id="monBtn" title="Systemmonitor (CPU/RAM/GPU) ein-/ausblenden"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></div>
+    <div class="winbtn" id="edit" title="Oberfläche bearbeiten: Kacheln verschieben, entfernen, hinzufügen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></div>
+    <div class="winbtn" id="refresh" title="Aktualisieren"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></svg></div>
+    <div class="winbtn" id="hideWin" title="In den Infobereich ausblenden">—</div>
+  </div>
+
+  <!-- Modellserver -->
+  <div class="hero">
+    <div class="hero-row">
+      <div class="pulse" id="nPulse"></div>
+      <h2>NInfer<span id="nModel"></span><small id="nSub">prüfe …</small></h2>
+      <span class="chip" id="nChip">…</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><i>Kontext</i><b id="nCtx">–</b></div>
+      <div class="stat"><i>Tempo</i><b id="nTps">–</b></div>
+      <div class="stat"><i>Aktiv</i><b id="nBusy">–</b></div>
+    </div>
+    <div>
+      <div class="bar-l"><span>Grafikspeicher</span><span id="vText">–</span></div>
+      <div class="bar"><div id="vBar"></div></div>
+    </div>
+    <div class="actions" id="nActions"></div>
+  </div>
+
+  <div class="editbar" id="editbar">
+    <div class="eb-head"><b>Bearbeiten</b><span>Kacheln ziehen · × entfernt · + fügt hinzu</span>
+      <button class="btn sm" id="editDone">✓ Fertig</button></div>
+    <div class="eb-hidden" id="hiddenList"></div>
+    <div style="display:flex;gap:14px">
+      <button class="eb-reset" id="editReset">Standard-Anordnung wiederherstellen</button>
+      <button class="btn sm ghost" data-tool="all" data-act="redetect">🔍 Tools neu erkennen</button>
+    </div>
+  </div>
+
+  <div class="sec">Agenten &amp; Oberflächen <span id="aCount"></span></div>
+  <div class="grid" id="grid-agents" data-section="agents">
+    <div class="tile" data-tile="hermes">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="#e5e7eb"><path d="M12 2l2.4 6.9H22l-6 4.5 2.3 7L12 16l-6.3 4.4 2.3-7-6-4.5h7.6z"/></svg></div>
+        <div class="tn"><b>Hermes</b><small>Agent · Gedächtnis · Cron</small></div><div class="dot"></div></div>
+      <div class="chips" id="hChips"></div>
+      <div class="ta"><button class="btn sm" data-tool="hermes" data-act="chat">💬 Chat</button>
+        <button class="btn sm ghost" data-tool="hermes" data-act="dashboard">Dashboard</button></div>
+    </div>
+    <div class="tile" data-tile="openwebui">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2.4"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="#e5e7eb"/></svg></div>
+        <div class="tn"><b>Open WebUI</b><small>Chat-Oberfläche</small></div><div class="dot"></div></div>
+      <div class="chips" id="wChips"></div>
+      <div class="ta"><button class="btn sm" data-tool="openwebui" data-act="open">↗ Öffnen</button></div>
+    </div>
+    <div class="tile" data-tile="opencode">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2.2" stroke-linecap="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg></div>
+        <div class="tn"><b>OpenCode</b><small>Coding-Agent · Dienst</small></div><div class="dot"></div></div>
+      <div class="chips" id="oChips"></div>
+      <div class="ta"><button class="btn sm steel" data-tool="opencode" data-act="terminal">⌨ Terminal</button>
+        <button class="btn sm ghost" data-tool="opencode" data-act="folder">Ordner…</button></div>
+    </div>
+    <div class="tile" data-tile="claude">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="#e5e7eb"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg></div>
+        <div class="tn"><b>Claude</b><small>Desktop-App · Cloud</small></div><div class="dot"></div></div>
+      <div class="chips"><span class="chip">nicht lokal</span></div>
+      <div class="ta"><button class="btn sm ghost" data-tool="claude" data-act="open">↗ Öffnen</button></div>
+    </div>
+  </div>
+
+  <div class="sec">Kreativ &amp; Werkzeuge <span>Starten bei Bedarf</span></div>
+  <div class="grid" id="grid-creative" data-section="creative">
+    <div class="tile" data-tile="comfyui">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2.2"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2" fill="#e5e7eb"/><path d="M21 16l-5-5-8 9"/></svg></div>
+        <div class="tn"><b>ComfyUI</b><small>Bilder &amp; Video</small></div><div class="dot"></div></div>
+      <div class="ta"><button class="btn sm" data-tool="comfyui" data-act="start">▶ Starten</button></div>
+    </div>
+    <div class="tile" data-tile="pinokio">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="#e5e7eb"><path d="M12 2c3 4 5 7 5 10a5 5 0 01-10 0c0-3 2-6 5-10z"/></svg></div>
+        <div class="tn"><b>Pinokio</b><small>KI-App-Browser</small></div><div class="dot"></div></div>
+      <div class="ta"><button class="btn sm ghost" data-tool="pinokio" data-act="open">↗ Öffnen</button></div>
+    </div>
+    <div class="tile" data-tile="luminar">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="#e5e7eb"/></svg></div>
+        <div class="tn"><b>Luminar AI</b><small>Fotobearbeitung</small></div><div class="dot"></div></div>
+      <div class="ta"><button class="btn sm ghost" data-tool="luminar" data-act="open">↗ Öffnen</button></div>
+    </div>
+    <div class="tile dim" data-tile="llama">
+      <div class="th"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.2"><path d="M4 7h16M4 12h10M4 17h7"/></svg></div>
+        <div class="tn"><b>llama.cpp</b><small>ausgemustert · 8081</small></div><div class="dot"></div></div>
+      <div class="ta"><button class="btn sm ghost" data-tool="llama" data-act="info">Info</button></div>
+    </div>
+  </div>
+
+  <div id="tileStore" hidden></div>
+
+  <div class="foot">
+    <button class="btn ghost" data-tool="all" data-act="vram" data-confirm="1">🧹 VRAM frei</button>
+    <button class="btn ghost" data-tool="all" data-act="logs">📜 Logs</button>
+    <button class="btn danger" data-tool="all" data-act="stopall" data-confirm="1">⏻ Alles stoppen</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let last = null;
+
+function toast(msg, err){
+  const t = $('#toast'); t.textContent = msg; t.className = err ? 'show err' : 'show';
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = '', 3400);
+}
+const fmtK = n => n >= 1000 ? Math.round(n / 1024) + 'k' : String(n);
+const chip = (txt, on) => `<span class="chip${on ? ' g' : ''}">${txt}</span>`;
+
+function renderNinfer(n){
+  const pulse = $('#nPulse'), chipEl = $('#nChip');
+  let sub, state;
+  if (n.installed === false){
+    pulse.className = 'pulse'; $('#nSub').textContent = 'auf diesem PC nicht gefunden';
+    chipEl.textContent = 'fehlt'; chipEl.className = 'chip';
+    const box = $('#nActions');
+    if (box.dataset.mode !== 'missing'){ box.dataset.mode = 'missing';
+      box.innerHTML = '<button class="btn ghost" data-tool="all" data-act="redetect">🔍 Tools neu erkennen</button>'; }
+    return;
+  }
+  if (n.ready){ state = 'ok'; sub = `läuft${n.since ? ' seit ' + n.since : ''} · Port ${n.port || 8080}`; chipEl.textContent = 'bereit'; chipEl.className = 'chip g'; }
+  else if (n.running){ state = 'warn'; sub = 'lädt Modell …'; chipEl.textContent = 'startet'; chipEl.className = 'chip'; }
+  else { state = ''; sub = 'gestoppt · Grafikspeicher frei'; chipEl.textContent = 'aus'; chipEl.className = 'chip'; }
+  pulse.className = 'pulse ' + state;
+  $('#nSub').textContent = sub;
+  $('#nModel').textContent = n.model ? ' · ' + n.model : '';
+  $('#nCtx').textContent = n.context ? fmtK(n.context) : '–';
+  $('#nTps').textContent = n.tps ? Math.round(n.tps) + ' t/s' : '–';
+  $('#nBusy').textContent = n.ready ? (n.busy ? 'rechnet' : 'frei') : '–';
+  if (n.vram_used != null){
+    $('#vText').textContent = `${String(n.vram_used).replace('.', ',')} / ${String(n.vram_total).replace('.', ',')} GB`;
+    $('#vBar').style.width = Math.min(100, n.vram_used / n.vram_total * 100) + '%';
+  }
+  const want = n.running ? 'run' : 'stop';
+  const box = $('#nActions');
+  if (box.dataset.mode !== want){
+    box.dataset.mode = want;
+    box.innerHTML = n.running
+      ? `<button class="btn ghost" data-tool="ninfer" data-act="restart">⟳ Neustart</button>
+         <button class="btn ghost" data-tool="ninfer" data-act="monitor">📈 Monitor</button>
+         <button class="btn danger" data-tool="ninfer" data-act="stop" data-confirm="1">■ Stoppen</button>`
+      : `<button class="btn" data-tool="ninfer" data-act="start">▶ Starten</button>
+         <button class="btn ghost" data-tool="all" data-act="logs">📜 Log</button>`;
+  }
+}
+
+function setTile(name, on){ const t = document.querySelector(`[data-tile="${name}"]`); if (t) t.classList.toggle('on', !!on); }
+
+function render(s){
+  last = s;
+  renderNinfer(s.ninfer);
+  $('#sub').textContent = `Alles lokal · ${s.time}`;
+  setTile('hermes', s.hermes.running);
+  $('#hChips').innerHTML = chip('Telegram', s.hermes.telegram) + chip('API 8642', s.hermes.api) + (s.hermes.dashboard ? chip('Dashboard', true) : '');
+  setTile('openwebui', s.openwebui.running);
+  $('#wChips').innerHTML = s.openwebui.running ? chip('Port ' + s.openwebui.port, true) : chip('aus');
+  setTile('opencode', s.opencode.running);
+  $('#oChips').innerHTML = s.opencode.running ? chip('Dienst ' + s.opencode.port, true) : chip('Dienst aus');
+  for (const k of ['claude', 'comfyui', 'pinokio', 'luminar', 'llama']) setTile(k, s[k] && s[k].running);
+  const act = ['hermes', 'openwebui', 'opencode', 'claude'].filter(k => s[k].running).length;
+  $('#aCount').textContent = `${act} von 4 aktiv`;
+}
+
+async function refresh(spin){
+  if (spin){ const r = $('#refresh'); r.classList.remove('spin'); void r.offsetWidth; r.classList.add('spin'); }
+  try { render(await (await fetch('/api/status', { cache: 'no-store' })).json()); }
+  catch { $('#nSub').textContent = 'Widget-Dienst nicht erreichbar'; }
+}
+
+/* Lichtwelle + Kachel-Druck */
+function ripple(btn, e){
+  const r = btn.getBoundingClientRect(), d = Math.max(r.width, r.height);
+  const s = document.createElement('span'); s.className = 'ripple';
+  s.style.width = s.style.height = d + 'px';
+  s.style.left = (e.clientX - r.left - d / 2) + 'px'; s.style.top = (e.clientY - r.top - d / 2) + 'px';
+  btn.appendChild(s); setTimeout(() => s.remove(), 600);
+}
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest('.btn'); if (!b || b.disabled) return;
+  ripple(b, e);
+  const t = b.closest('.tile'); if (t){ t.classList.add('press'); setTimeout(() => t.classList.remove('press'), 160); }
+});
+
+const pendingConfirm = new WeakMap();
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.btn[data-tool]'); if (!b) return;
+  if (b.dataset.confirm && !pendingConfirm.get(b)){
+    const old = b.innerHTML; pendingConfirm.set(b, old);
+    b.classList.add('confirm'); b.textContent = 'Sicher? Nochmal';
+    setTimeout(() => { if (pendingConfirm.get(b)){ b.innerHTML = old; b.classList.remove('confirm'); pendingConfirm.delete(b); } }, 3000);
+    return;
+  }
+  if (pendingConfirm.get(b)){ b.innerHTML = pendingConfirm.get(b); b.classList.remove('confirm'); pendingConfirm.delete(b); }
+  b.disabled = true;
+  try {
+    const r = await fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: b.dataset.tool, action: b.dataset.act }) });
+    const j = await r.json();
+    j.ok ? toast(j.message) : toast(j.error || 'Fehler', true);
+  } catch { toast('Widget-Dienst nicht erreichbar', true); }
+  setTimeout(() => { b.disabled = false; refresh(); }, 900);
+});
+
+$('#refresh').onclick = () => refresh(true);
+const host = window.chrome && window.chrome.webview;
+$('#hideWin').onclick = () => host ? host.postMessage('hide')
+  : fetch('/api/window', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"cmd":"hide"}' });
+$('#monBtn').onclick = () => host && host.postMessage('monitor');
+// Randloses Fenster: an der Kopfzeile (ausser den Symbolen) verschieben
+$('.top').addEventListener('mousedown', e => {
+  if (e.button !== 0 || e.target.closest('.winbtn') || !host) return;
+  e.preventDefault(); host.postMessage('drag');
+});
+
+/* ================= Layout: Raster bearbeiten ================= */
+const DEFAULT_LAYOUT = { agents: ['hermes', 'openwebui', 'opencode', 'claude'],
+                         creative: ['comfyui', 'pinokio', 'luminar', 'llama'], hidden: [] };
+const TILE_NAMES = {};
+const grids = { agents: $('#grid-agents'), creative: $('#grid-creative') };
+let layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+
+// Jede Kachel bekommt Entfernen-Knopf und Griff; Namen merken
+document.querySelectorAll('.tile').forEach(t => {
+  TILE_NAMES[t.dataset.tile] = t.querySelector('.tn b').textContent;
+  t.insertAdjacentHTML('afterbegin', '<span class="grip">⋮⋮</span><button class="rm" title="Kachel entfernen">×</button>');
+  t.draggable = false;
+});
+
+function applyLayout(){
+  for (const sec of ['agents', 'creative']){
+    const g = grids[sec];
+    for (const id of layout[sec]){ const t = document.querySelector(`.tile[data-tile="${id}"]`); if (t) g.appendChild(t); }
+  }
+  for (const id of layout.hidden){ const t = document.querySelector(`.tile[data-tile="${id}"]`); if (t) $('#tileStore').appendChild(t); }
+  // Auf diesem PC nicht gefundene Tools ausblenden (Position im Layout bleibt erhalten)
+  if (present) document.querySelectorAll('.tile').forEach(t => t.classList.toggle('missing', present[t.dataset.tile] === false));
+  for (const sec of ['agents', 'creative']){
+    const g = grids[sec];
+    g.querySelectorAll('.empty').forEach(e => e.remove());
+    if (!g.querySelector('.tile:not(.missing)')) g.insertAdjacentHTML('beforeend', '<div class="empty">keine Kacheln – hierher ziehen</div>');
+  }
+  renderHiddenList();
+}
+let present = null;   // welche Tools die Erkennung gefunden hat
+
+function readLayoutFromDom(){
+  const l = { agents: [], creative: [], hidden: [] };
+  for (const sec of ['agents', 'creative']) grids[sec].querySelectorAll('.tile').forEach(t => l[sec].push(t.dataset.tile));
+  $('#tileStore').querySelectorAll('.tile').forEach(t => l.hidden.push(t.dataset.tile));
+  return l;
+}
+
+async function saveLayout(){
+  layout = readLayoutFromDom();
+  applyLayout();
+  try { await fetch('/api/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(layout) }); }
+  catch { toast('Layout konnte nicht gespeichert werden', true); }
+}
+
+function renderHiddenList(){
+  const box = $('#hiddenList');
+  const hidden = [...$('#tileStore').querySelectorAll('.tile:not(.missing)')].map(t => t.dataset.tile);
+  const missing = present ? Object.keys(TILE_NAMES).filter(id => present[id] === false) : [];
+  box.innerHTML = (hidden.length
+    ? hidden.map(id => `<button class="addchip" data-add="${id}"><i>+</i>${TILE_NAMES[id]}</button>`).join('')
+    : '<span class="none">Alle Kacheln sind sichtbar.</span>')
+    + (missing.length ? `<span class="none" style="width:100%">Nicht installiert: ${missing.map(id => TILE_NAMES[id]).join(', ')}</span>` : '');
+}
+
+function setEditing(on){
+  document.body.classList.toggle('editing', on);
+  $('#edit').classList.toggle('on', on);
+  document.querySelectorAll('.tile').forEach(t => t.draggable = on);
+  if (on) renderHiddenList();
+}
+$('#edit').onclick = () => setEditing(!document.body.classList.contains('editing'));
+$('#editDone').onclick = () => { setEditing(false); toast('Anordnung gespeichert.'); };
+$('#editReset').onclick = () => {
+  layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  applyLayout(); saveLayout(); setEditing(true); toast('Standard-Anordnung wiederhergestellt.');
+};
+
+// Entfernen (×) und Hinzufügen (+)
+document.addEventListener('click', e => {
+  const rm = e.target.closest('.tile .rm');
+  if (rm && document.body.classList.contains('editing')){
+    const t = rm.closest('.tile'); $('#tileStore').appendChild(t); saveLayout();
+    toast(`„${TILE_NAMES[t.dataset.tile]}“ entfernt – über + wieder hinzufügen.`);
+    return;
+  }
+  const add = e.target.closest('[data-add]');
+  if (add){
+    const t = document.querySelector(`.tile[data-tile="${add.dataset.add}"]`);
+    const sec = ['opencode', 'hermes', 'openwebui', 'claude'].includes(add.dataset.add) ? 'agents' : 'creative';
+    grids[sec].appendChild(t); t.draggable = true; saveLayout();
+  }
+}, true);
+
+// Ziehen & Ablegen im Raster (auch zwischen den Bereichen)
+let dragTile = null;
+const ph = document.createElement('div'); ph.className = 'ph';
+document.addEventListener('dragstart', e => {
+  const t = e.target.closest && e.target.closest('.tile');
+  if (!t || !document.body.classList.contains('editing')) return;
+  dragTile = t; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', t.dataset.tile);
+  setTimeout(() => { t.classList.add('dragging'); t.after(ph); t.style.display = 'none'; }, 0);
+});
+document.addEventListener('dragend', () => {
+  if (!dragTile) return;
+  if (ph.parentNode) ph.replaceWith(dragTile);
+  dragTile.style.display = ''; dragTile.classList.remove('dragging'); dragTile = null;
+  saveLayout();
+});
+for (const g of Object.values(grids)){
+  g.addEventListener('dragover', e => {
+    if (!dragTile) return;
+    e.preventDefault();
+    const tiles = [...g.querySelectorAll('.tile:not(.dragging)')].filter(t => t.style.display !== 'none');
+    let target = null;
+    for (const t of tiles){
+      const r = t.getBoundingClientRect();
+      const before = e.clientY < r.top + r.height / 2 || (e.clientY < r.bottom && e.clientX < r.left + r.width / 2);
+      if (e.clientY < r.bottom && before){ target = t; break; }
+    }
+    g.querySelectorAll('.empty').forEach(x => x.remove());
+    target ? g.insertBefore(ph, target) : g.appendChild(ph);
+  });
+  g.addEventListener('drop', e => e.preventDefault());
+}
+
+(async () => {
+  try { present = await (await fetch('/api/config', { cache: 'no-store' })).json(); } catch {}
+  try { layout = await (await fetch('/api/layout', { cache: 'no-store' })).json(); } catch {}
+  applyLayout();
+})();
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>
